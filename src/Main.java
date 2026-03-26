@@ -1,6 +1,5 @@
 import java.util.*;
 
-// ---------- RESERVATION (UC5) ----------
 class Reservation {
 
     private String guestName;
@@ -20,98 +19,50 @@ class Reservation {
     }
 }
 
-// ---------- INVENTORY (UC3) ----------
-class RoomInventory {
+class BookingHistory {
 
-    private Map<String, Integer> roomAvailability;
+    private List<Reservation> confirmedReservations;
 
-    public RoomInventory() {
-        roomAvailability = new HashMap<>();
-        roomAvailability.put("Single", 5);
-        roomAvailability.put("Double", 3);
-        roomAvailability.put("Suite", 2);
+    public BookingHistory() {
+        confirmedReservations = new ArrayList<>();
     }
 
-    public Map<String, Integer> getRoomAvailability() {
-        return roomAvailability;
+    public void addReservation(Reservation reservation) {
+        confirmedReservations.add(reservation);
     }
 
-    public void decreaseRoom(String type) {
-        roomAvailability.put(type, roomAvailability.get(type) - 1);
+    public List<Reservation> getConfirmedReservations() {
+        return confirmedReservations;
     }
 }
 
-// ---------- ALLOCATION SERVICE (UC6) ----------
-class RoomAllocationService {
+class BookingReportService {
 
-    private Set<String> allocatedRooms;
-    private Map<String, Set<String>> assignedRoomsByType;
+    public void generateReport(BookingHistory history) {
 
-    public RoomAllocationService() {
-        allocatedRooms = new HashSet<>();
-        assignedRoomsByType = new HashMap<>();
-    }
+        System.out.println("\nBooking History Report");
 
-    public void allocateRoom(Reservation reservation, RoomInventory inventory) {
-
-        String roomType = reservation.getRoomType();
-        int available = inventory.getRoomAvailability().get(roomType);
-
-        if (available > 0) {
-
-            String roomId = generateRoomId(roomType);
-
-            allocatedRooms.add(roomId);
-
-            assignedRoomsByType
-                    .computeIfAbsent(roomType, k -> new HashSet<>())
-                    .add(roomId);
-
-            inventory.decreaseRoom(roomType);
-
-            System.out.println("Booking confirmed for Guest: "
-                    + reservation.getGuestName()
-                    + ", Room ID: "
-                    + roomId);
-
-        } else {
-            System.out.println("No rooms available for " + roomType);
+        for (Reservation r : history.getConfirmedReservations()) {
+            System.out.println("Guest: " + r.getGuestName() +
+                    ", Room Type: " + r.getRoomType());
         }
     }
-
-    private String generateRoomId(String roomType) {
-
-        int count = assignedRoomsByType
-                .getOrDefault(roomType, new HashSet<>())
-                .size() + 1;
-
-        return roomType + "-" + count;
-    }
 }
 
-// ---------- MAIN ----------
 public class Main {
 
     public static void main(String[] args) {
 
-        // UC1
-        System.out.println("=================================");
-        System.out.println(" Welcome to Book My Stay App ");
-        System.out.println(" Version: 6.0 ");
-        System.out.println("=================================\n");
+        System.out.println("Booking History and Reporting");
 
-        // UC6
-        System.out.println("Room Allocation Processing\n");
+        BookingHistory history = new BookingHistory();
 
-        RoomInventory inventory = new RoomInventory();
-        RoomAllocationService allocator = new RoomAllocationService();
+        history.addReservation(new Reservation("Abhi", "Single"));
+        history.addReservation(new Reservation("Subha", "Double"));
+        history.addReservation(new Reservation("Vannath", "Suite"));
 
-        Reservation r1 = new Reservation("Abhi", "Single");
-        Reservation r2 = new Reservation("Subha", "Single");
-        Reservation r3 = new Reservation("Vannath", "Suite");
+        BookingReportService reportService = new BookingReportService();
 
-        allocator.allocateRoom(r1, inventory);
-        allocator.allocateRoom(r2, inventory);
-        allocator.allocateRoom(r3, inventory);
+        reportService.generateReport(history);
     }
 }
