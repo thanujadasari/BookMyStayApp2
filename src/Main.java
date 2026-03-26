@@ -1,6 +1,6 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+// ---------- ROOM CLASSES (UC2) ----------
 abstract class Room {
 
     protected int numberOfBeds;
@@ -21,23 +21,18 @@ abstract class Room {
 }
 
 class SingleRoom extends Room {
-    public SingleRoom() {
-        super(1, 250, 1500.0);
-    }
+    public SingleRoom() { super(1, 250, 1500.0); }
 }
 
 class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super(2, 400, 2500.0);
-    }
+    public DoubleRoom() { super(2, 400, 2500.0); }
 }
 
 class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super(3, 750, 5000.0);
-    }
+    public SuiteRoom() { super(3, 750, 5000.0); }
 }
 
+// ---------- INVENTORY (UC3) ----------
 class RoomInventory {
 
     private Map<String, Integer> roomAvailability;
@@ -54,6 +49,7 @@ class RoomInventory {
     }
 }
 
+// ---------- SEARCH SERVICE (UC4) ----------
 class RoomSearchService {
 
     public void searchAvailableRooms(RoomInventory inventory,
@@ -86,16 +82,59 @@ class RoomSearchService {
     }
 }
 
+// ---------- BOOKING QUEUE (UC5) ----------
+class Reservation {
+
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+}
+
+class BookingRequestQueue {
+
+    private Queue<Reservation> requestQueue;
+
+    public BookingRequestQueue() {
+        requestQueue = new LinkedList<>();
+    }
+
+    public void addRequest(Reservation reservation) {
+        requestQueue.offer(reservation);
+    }
+
+    public Reservation getNextRequest() {
+        return requestQueue.poll();
+    }
+
+    public boolean hasPendingRequests() {
+        return !requestQueue.isEmpty();
+    }
+}
+
+// ---------- MAIN ----------
 public class Main {
 
     public static void main(String[] args) {
 
-        // UC1 + UC2 + UC3 + UC4
+        // UC1
         System.out.println("=================================");
         System.out.println(" Welcome to Book My Stay App ");
-        System.out.println(" Version: 4.0 ");
+        System.out.println(" Version: 5.0 ");
         System.out.println("=================================\n");
 
+        // UC2 + UC3 + UC4
         RoomInventory inventory = new RoomInventory();
 
         Room single = new SingleRoom();
@@ -103,7 +142,24 @@ public class Main {
         Room suite = new SuiteRoom();
 
         RoomSearchService searchService = new RoomSearchService();
-
         searchService.searchAvailableRooms(inventory, single, doubleRoom, suite);
+
+        // UC5
+        System.out.println("Booking Request Queue\n");
+
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+
+        bookingQueue.addRequest(new Reservation("Abhi", "Single"));
+        bookingQueue.addRequest(new Reservation("Subha", "Double"));
+        bookingQueue.addRequest(new Reservation("Vannath", "Suite"));
+
+        while (bookingQueue.hasPendingRequests()) {
+            Reservation request = bookingQueue.getNextRequest();
+
+            System.out.println("Processing booking for Guest: "
+                    + request.getGuestName()
+                    + ", Room Type: "
+                    + request.getRoomType());
+        }
     }
 }
