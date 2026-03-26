@@ -1,43 +1,26 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-abstract class Room {
+// ---------- RESERVATION (UC5) ----------
+class Reservation {
 
-    protected int numberOfBeds;
-    protected int squareFeet;
-    protected double pricePerNight;
+    private String guestName;
+    private String roomType;
 
-    public Room(int numberOfBeds, int squareFeet, double pricePerNight) {
-        this.numberOfBeds = numberOfBeds;
-        this.squareFeet = squareFeet;
-        this.pricePerNight = pricePerNight;
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
-    public void displayRoomDetails() {
-        System.out.println("Beds: " + numberOfBeds);
-        System.out.println("Size: " + squareFeet + " sqft");
-        System.out.println("Price per night: " + pricePerNight);
+    public String getGuestName() {
+        return guestName;
     }
-}
 
-class SingleRoom extends Room {
-    public SingleRoom() {
-        super(1, 250, 1500.0);
+    public String getRoomType() {
+        return roomType;
     }
 }
 
-class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super(2, 400, 2500.0);
-    }
-}
-
-class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super(3, 750, 5000.0);
-    }
-}
-
+// ---------- INVENTORY (UC3) ----------
 class RoomInventory {
 
     private Map<String, Integer> roomAvailability;
@@ -52,58 +35,83 @@ class RoomInventory {
     public Map<String, Integer> getRoomAvailability() {
         return roomAvailability;
     }
-}
 
-class RoomSearchService {
-
-    public void searchAvailableRooms(RoomInventory inventory,
-                                     Room singleRoom,
-                                     Room doubleRoom,
-                                     Room suiteRoom) {
-
-        Map<String, Integer> availability = inventory.getRoomAvailability();
-
-        if (availability.get("Single") > 0) {
-            System.out.println("Single Room:");
-            singleRoom.displayRoomDetails();
-            System.out.println("Available Rooms: " + availability.get("Single"));
-            System.out.println();
-        }
-
-        if (availability.get("Double") > 0) {
-            System.out.println("Double Room:");
-            doubleRoom.displayRoomDetails();
-            System.out.println("Available Rooms: " + availability.get("Double"));
-            System.out.println();
-        }
-
-        if (availability.get("Suite") > 0) {
-            System.out.println("Suite Room:");
-            suiteRoom.displayRoomDetails();
-            System.out.println("Available Rooms: " + availability.get("Suite"));
-            System.out.println();
-        }
+    public void decreaseRoom(String type) {
+        roomAvailability.put(type, roomAvailability.get(type) - 1);
     }
 }
 
+// ---------- ALLOCATION SERVICE (UC6) ----------
+class RoomAllocationService {
+
+    private Set<String> allocatedRooms;
+    private Map<String, Set<String>> assignedRoomsByType;
+
+    public RoomAllocationService() {
+        allocatedRooms = new HashSet<>();
+        assignedRoomsByType = new HashMap<>();
+    }
+
+    public void allocateRoom(Reservation reservation, RoomInventory inventory) {
+
+        String roomType = reservation.getRoomType();
+        int available = inventory.getRoomAvailability().get(roomType);
+
+        if (available > 0) {
+
+            String roomId = generateRoomId(roomType);
+
+            allocatedRooms.add(roomId);
+
+            assignedRoomsByType
+                    .computeIfAbsent(roomType, k -> new HashSet<>())
+                    .add(roomId);
+
+            inventory.decreaseRoom(roomType);
+
+            System.out.println("Booking confirmed for Guest: "
+                    + reservation.getGuestName()
+                    + ", Room ID: "
+                    + roomId);
+
+        } else {
+            System.out.println("No rooms available for " + roomType);
+        }
+    }
+
+    private String generateRoomId(String roomType) {
+
+        int count = assignedRoomsByType
+                .getOrDefault(roomType, new HashSet<>())
+                .size() + 1;
+
+        return roomType + "-" + count;
+    }
+}
+
+// ---------- MAIN ----------
 public class Main {
 
     public static void main(String[] args) {
 
-        // UC1 + UC2 + UC3 + UC4
+        // UC1
         System.out.println("=================================");
         System.out.println(" Welcome to Book My Stay App ");
-        System.out.println(" Version: 4.0 ");
+        System.out.println(" Version: 6.0 ");
         System.out.println("=================================\n");
 
+        // UC6
+        System.out.println("Room Allocation Processing\n");
+
         RoomInventory inventory = new RoomInventory();
+        RoomAllocationService allocator = new RoomAllocationService();
 
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
+        Reservation r1 = new Reservation("Abhi", "Single");
+        Reservation r2 = new Reservation("Subha", "Single");
+        Reservation r3 = new Reservation("Vannath", "Suite");
 
-        RoomSearchService searchService = new RoomSearchService();
-
-        searchService.searchAvailableRooms(inventory, single, doubleRoom, suite);
+        allocator.allocateRoom(r1, inventory);
+        allocator.allocateRoom(r2, inventory);
+        allocator.allocateRoom(r3, inventory);
     }
 }
